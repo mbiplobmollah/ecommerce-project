@@ -1,7 +1,48 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
+import MyContext from '../../context/data/myContext';
+import { toast } from 'react-toastify';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, fireDB } from '../../firebase/FirebaseConfig';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
 
-const Login = () => {
+const Signup = () => {
+
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const context = useContext(MyContext);
+    const {loading, setLoading} = context;
+
+
+    const signup =async () =>{
+    if(name === '' || email === '' || password === ''){
+        return toast.error('All fields are required')
+    }
+    try{
+        const users = await createUserWithEmailAndPassword(auth, email, password);
+        console.log(users);
+
+        const user = {
+            name: name,
+            uid: users.user.uid,
+            email: users.user.email,
+            time: Timestamp.now()
+        }
+
+        const userRef = collection(fireDB, 'users')
+        await addDoc(userRef, user);
+        setName('');
+        setEmail('');
+        setPassword('');
+        toast.success('Signup Successful')
+    }catch(error){
+        console.log(error)
+    }
+    }
+
+
     return (
         <div className='flex justify-center items-center h-screen'>
             <div className='bg-gray-800 px-10 py-10 rounded-xl'>
@@ -9,13 +50,22 @@ const Login = () => {
             <h1 className='text-center text-white text-xl mb-4 font-bold'>Signup</h1>
             </div>
             <div>
-                <input type="email" name='email' className='bg-gray-600 mb-4 px-2 py-2 w-full lg:w-[20em] rounded-lg text-white placeholder:text-gray-200 outline-none' placeholder='Email'/>             
+                <input
+                value={name} onChange={(e)=>setName(e.target.value)}
+                type="text" name='name' className='bg-gray-600 mb-4 px-2 py-2 w-full lg:w-[20em] rounded-lg text-white placeholder:text-gray-200 outline-none' placeholder='Name'/>             
             </div>
             <div>
-                <input type="password" name='email' className='bg-gray-600 mb-4 px-2 py-2 w-full lg:w-[20em] rounded-lg text-white placeholder:text-gray-200 outline-none' placeholder='Password'/>             
+                <input 
+                value={email} onChange={(e)=>setEmail(e.target.value)}
+                type="email" name='email' className='bg-gray-600 mb-4 px-2 py-2 w-full lg:w-[20em] rounded-lg text-white placeholder:text-gray-200 outline-none' placeholder='Email'/>             
+            </div>
+            <div>
+                <input
+                value={password} onChange={(e)=>setPassword(e.target.value)}
+                type="password" name='password' className='bg-gray-600 mb-4 px-2 py-2 w-full lg:w-[20em] rounded-lg text-white placeholder:text-gray-200 outline-none' placeholder='Password'/>             
             </div>
             <div className='flex justify-center mb-3'>
-                <button className='bg-red-400 w-full text-black font-bold px-2 py-2 rounded-lg'>
+                <button onClick={signup} className='bg-red-400 w-full text-black font-bold px-2 py-2 rounded-lg'>
                 Signup
                 </button>
             </div>
@@ -27,4 +77,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Signup;
